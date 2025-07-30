@@ -1,25 +1,23 @@
-import { readFile } from 'fs/promises';
 import admin from 'firebase-admin';
 
-const serviceAccount = JSON.parse(
-  await readFile(new URL('../firebase-service-account.json', import.meta.url))
-);
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
 }
+
 const db = admin.firestore();
 
 export default async function handler(req, res) {
-  // ✅ Tambahkan CORS headers
+  // CORS headers
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
-    return res.status(200).end(); // preflight OK
+    return res.status(200).end();
   }
 
   if (req.method !== "POST") {
@@ -45,10 +43,11 @@ export default async function handler(req, res) {
     }
 
     await doc.ref.update({ hadir: true });
+
     return res.status(200).json({ success: true, message: "Tiket valid. Akses diberikan.", data });
 
   } catch (err) {
-    console.error(err);
+    console.error("🔥 Error Server:", err);
     return res.status(500).json({ success: false, message: "Terjadi kesalahan server." });
   }
 }
